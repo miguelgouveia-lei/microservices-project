@@ -55,3 +55,5 @@ logs/
 .service-pids
 
 *.pem
+tools/terraform/terraform.exe
+*.pem
