@@ -1,0 +1,25 @@
+---
+- name: Deploy Application
+  hosts: web_servers
+  become: yes
+
+  vars:
+    container_name: nginx-app
+    app_port: 8090
+
+  tasks:
+
+    - name: Pull latest nginx image
+      shell: docker pull nginx
+
+    - name: Stop existing container
+      shell: docker rm -f {{ container_name }} || true
+
+    - name: Start new container
+      shell: |
+        docker run -d \
+        --name {{ container_name }} \
+        --restart unless-stopped \
+        -p {{ app_port }}:80 \
+        -e SPRING_PROFILES_ACTIVE=production \
+        nginx

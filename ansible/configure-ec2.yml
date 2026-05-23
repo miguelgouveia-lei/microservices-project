@@ -1,0 +1,62 @@
+---
+- name: Configure EC2 Instances
+  hosts: web_servers
+  become: yes
+  gather_facts: yes
+
+  vars:
+    app_user: appuser
+    app_directory: /opt/app
+
+  tasks:
+
+    - name: Create application user
+      user:
+        name: "{{ app_user }}"
+        system: yes
+        shell: /bin/bash
+
+    - name: Install required packages
+      shell: |
+        if command -v dnf >/dev/null 2>&1; then
+          dnf install -y git java-21-amazon-corretto maven
+        else
+          yum install -y git java-21-amazon-corretto maven
+        fi
+
+    - name: Create application directory
+      file:
+        path: "{{ app_directory }}"
+        state: directory
+        owner: "{{ app_user }}"
+        group: "{{ app_user }}"
+        mode: '0755'
+
+    - name: Clone repository
+      git:
+        repo: https://github.com/docker/getting-started.git
+        dest: "{{ app_directory }}/demo-app"
+
+    - name: Create systemd service file
+      copy:
+        dest: /etc/systemd/system/demo.service
+        content: |
+          [Unit]
+          Description=Demo Service
+
+          [Service]
+          ExecStart=/usr/bin/python3 -m http.server 8081
+          WorkingDirectory={{ app_directory }}/demo-app
+
+          [Install]
+          WantedBy=multi-user.target
+
+    - name: Reload systemd
+      systemd:
+        daemon_reload: yes
+
+    - name: Enable and start service
+      systemd:
+        name: demo.service
+        enabled: yes
+        state: started
