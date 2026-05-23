@@ -52,8 +52,9 @@ jobs:
 
       - name: Install Ansible
         run: |
-          sudo apt update
-          sudo apt install -y ansible
+          python3 -m pip install --user "ansible-core==2.15.13"
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+          ansible --version
 
       - name: Prepare SSH key
         run: |
